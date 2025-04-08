@@ -77,6 +77,10 @@ class DanmakuController {
     }
   }
 
+  void addAll(Map<int, Danmakus> danmakus) {
+    this.danmakus.addAll(danmakus);
+  }
+
   void addDanmaku(
     Danmaku danmaku, {
     int pool = DanmakuController.poolUndefined,

@@ -1,13 +1,24 @@
 import 'dart:math';
+import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
+import 'package:fl_danmaku_example/bili_special_danmaku.dart';
+import 'package:fl_danmaku_widget/danmaku/bottom_danmaku.dart';
+import 'package:fl_danmaku_widget/danmaku/danmaku.dart';
+import 'package:fl_danmaku_widget/danmaku/l2r_danmaku.dart';
 import 'package:fl_danmaku_widget/danmaku/special_danmaku.dart';
+import 'package:fl_danmaku_widget/danmaku/top_danmaku.dart';
 import 'package:fl_danmaku_widget/model/danmaku_config.dart';
+import 'package:fl_danmaku_widget/model/danmakus.dart';
 import 'package:fl_danmaku_widget/ui/danmaku_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_danmaku_widget/ui/danmaku_widget.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_danmaku_widget/danmaku/r2l_danmaku.dart';
 import 'package:fl_danmaku_widget/value.dart';
+import 'package:xml/xml.dart';
+import 'package:xml/xpath.dart';
 
 void main() {
   runApp(const MyApp());
@@ -365,12 +376,14 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             SimpleDialogOption(
               onPressed: () {
+                parseDanmakuBiliAsset();
                 Navigator.pop(context);
               },
               child: const Text("danmakuBili"),
             ),
             SimpleDialogOption(
               onPressed: () {
+                parseDanmakuBiliFile();
                 Navigator.pop(context);
               },
               child: const Text("file"),
@@ -391,12 +404,12 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               child: const Text("empty"),
             ),
-            SimpleDialogOption(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text("later 10s"),
-            ),
+            // SimpleDialogOption(
+            //   onPressed: () {
+            //     Navigator.pop(context);
+            //   },
+            //   child: const Text("later 10s"),
+            // ),
             SimpleDialogOption(
               onPressed: () {
                 _danmakuController.debugStyle = _danmakuController.debugStyle
@@ -713,6 +726,7 @@ class _MyHomePageState extends State<MyHomePage> {
         rotationZ: random.nextDouble() * 720,
       );
     }
+
     final keyframes = <double, SpecialDanmakuFrame>{};
     for (var i = 0; i <= 8; i++) {
       keyframes[random.nextDouble()] = createRandomFrame();
@@ -727,5 +741,137 @@ class _MyHomePageState extends State<MyHomePage> {
         ..offset = 0,
     );
     _danmakuController.seekTo(0);
+  }
+
+  void parseDanmakuBiliXml(String xml) {
+    final doc = XmlDocument.parse(xml);
+    final danmakus = <int, Danmakus>{};
+    Danmaku createDanmaku(int type) {
+      if (type == 1) {
+        return R2LDanmaku();
+      } else if (type == 4) {
+        return BottomDanmaku();
+      } else if (type == 5) {
+        return TopDanmaku();
+      } else if (type == 6) {
+        return L2RDanmaku();
+      } else if (type == 7) {
+        return BiliSpecialDanmaku();
+      } else {
+        print("unknown danmaku type: $type, default to R2LDanmaku");
+        return R2LDanmaku();
+      }
+    }
+
+    doc.xpath("/i/d").forEach((d) {
+      final p = d.getAttribute("p")!.split(",");
+      final danmaku = createDanmaku(int.parse(p[1]));
+      danmaku
+        ..text = d.innerText
+        ..offset = (double.parse(p[0]) * 1000).toInt()
+        ..textSize = double.parse(p[2])
+        ..textColor = Color(int.parse(p[3]) | 0xFF000000);
+      danmakus[int.parse(p[5])] ??= Danmakus();
+      danmakus[int.parse(p[5])]!.add(danmaku);
+      if (danmaku is BiliSpecialDanmaku) {
+        var text = danmaku.text;
+        if (text.startsWith("[")) {
+          final textArray = <String>[];
+          dynamic jsonArray;
+          try {
+            jsonArray = json.decode(text);
+          } catch (e) {
+            try {
+              jsonArray = json.decode(text + '"]');
+            } catch (e) {
+              try {
+                jsonArray = json.decode(text + ']');
+              } catch (e) {
+                try {
+                  jsonArray = json.decode(text.substring(0, text.length - 1) + ']');
+                } catch (e) {
+
+                }
+              }
+            }
+          }
+          if (jsonArray != null) {
+            jsonArray.forEach((i) {
+              textArray.add(i.toString());
+            });
+          } else {
+            print("parse error");
+          }
+          if (textArray.length >= 5 && textArray[4].isNotEmpty) {
+            danmaku.text = textArray[4];
+            danmaku.fillText();
+            var beginX = double.tryParse(textArray[0]) ?? 0;
+            var beginY = double.tryParse(textArray[1]) ?? 0;
+            var endX = beginX;
+            var endY = beginY;
+            var alphaArray = textArray[2].split("-");
+            var beginAlpha = double.tryParse(alphaArray[0]) ?? 1;
+            var endAlpha = beginAlpha;
+            if (alphaArray.length > 1) {
+              endAlpha = double.tryParse(alphaArray[1]) ?? 1;
+            }
+            var rotateY = 0.0;
+            if (textArray.length >= 7) {
+              rotateY = double.tryParse(textArray[6]) ?? 0;
+            }
+            if (textArray.length >= 11) {
+              endX = double.tryParse(textArray[7]) ?? 0;
+              endY = double.tryParse(textArray[8]) ?? 0;
+            }
+            if (textArray[0].contains(".")) {
+              beginX *= BiliSpecialDanmaku.biliPlayerWidth;
+            }
+            if (textArray[1].contains(".")) {
+              beginY *= BiliSpecialDanmaku.biliPlayerHeight;
+            }
+            if (textArray.length >= 8 && textArray[7].contains(".")) {
+              endX *= BiliSpecialDanmaku.biliPlayerWidth;
+            }
+            if (textArray.length >= 9 && textArray[8].contains(".")) {
+              endY *= BiliSpecialDanmaku.biliPlayerHeight;
+            }
+            danmaku
+              ..beginX = beginX
+              ..beginY = beginY
+              ..endX = endX
+              ..endY = endY
+              ..beginAlpha = beginAlpha
+              ..endAlpha = endAlpha
+              ..rotationY = rotateY;
+            if (textArray.length >= 12) {
+              if (bool.tryParse(textArray[11]) ?? false) {
+                danmaku.textShadowColor = Colors.transparent;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    _danmakuController.pause();
+    _danmakuController.removeAllDanmakus();
+    _danmakuController.addAll(danmakus);
+    _danmakuController.seekTo(0);
+  }
+
+  Future<void> parseDanmakuBiliAsset() async {
+    final xml = await rootBundle.loadString("assets/danmaku.xml");
+    parseDanmakuBiliXml(xml);
+  }
+
+  Future<void> parseDanmakuBiliFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xml'],
+    );
+    if (result != null) {
+      final xml = await result.files.first.xFile.readAsString();
+      parseDanmakuBiliXml(xml);
+    }
   }
 }

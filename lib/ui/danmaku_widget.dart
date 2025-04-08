@@ -77,7 +77,11 @@ class _DanmakuPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final drawWidth = size.width;
     final drawHeight = size.height;
-    _drawDanmakus(canvas, drawWidth, drawHeight);
+    try {
+      _drawDanmakus(canvas, drawWidth, drawHeight);
+    } catch (e) {
+      // 静默失败 不好
+    }
   }
 
   @override
