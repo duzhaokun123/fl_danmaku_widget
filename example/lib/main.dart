@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_danmaku_widget/danmaku/r2l_danmaku.dart';
 import 'package:fl_danmaku_widget/value.dart';
+import 'package:platform_info/platform_info.dart';
 import 'package:xml/xml.dart';
 import 'package:xml/xpath.dart';
 
@@ -355,6 +356,21 @@ class _MyHomePageState extends State<MyHomePage> {
                         },
                         min: 0,
                         max: 1,
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                content: Text(
+                                  "${platform.operatingSystem} ${platform.version} ${platform.type} ${platform.locale}",
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        child: const Text("platform"),
                       ),
                     ],
                   ),
@@ -788,10 +804,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 jsonArray = json.decode(text + ']');
               } catch (e) {
                 try {
-                  jsonArray = json.decode(text.substring(0, text.length - 1) + ']');
-                } catch (e) {
-
-                }
+                  jsonArray = json.decode(
+                    text.substring(0, text.length - 1) + ']',
+                  );
+                } catch (e) {}
               }
             }
           }
