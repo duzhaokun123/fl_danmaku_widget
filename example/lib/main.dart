@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:convert';
 
@@ -87,6 +88,10 @@ class _MyHomePageState extends State<MyHomePage> {
               _danmakuController.debugStyle = GoogleFonts.robotoMono(
                 textStyle: _danmakuController.debugStyle,
               );
+
+              Timer(Duration(seconds: 1), () {
+                _danmakuController.period = (1000 / 60).toInt();
+              });
             },
             danmakuConfig: danmakuConfig,
           ),
