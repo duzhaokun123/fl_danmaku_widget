@@ -15,6 +15,7 @@ import 'package:fl_danmaku_widget/ui/danmaku_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_danmaku_widget/ui/danmaku_widget.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_danmaku_widget/danmaku/r2l_danmaku.dart';
 import 'package:fl_danmaku_widget/value.dart';
@@ -22,7 +23,18 @@ import 'package:platform_info/platform_info.dart';
 import 'package:xml/xml.dart';
 import 'package:xml/xpath.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Window.initialize();
+    if (platform.windows) {
+      await Window.setEffect(effect: WindowEffect.acrylic, dark: true);
+    } else {
+      await Window.setEffect(effect: WindowEffect.transparent, dark: true);
+    }
+  } catch (e) {
+    print("Window effect error: $e");
+  }
   runApp(const MyApp());
 }
 
@@ -69,9 +81,12 @@ class _MyHomePageState extends State<MyHomePage> {
   var _marginBottom = 0.0;
   var _maxRelativeHeight = 1.0;
 
+  dynamic _background = Colors.black;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
@@ -80,7 +95,10 @@ class _MyHomePageState extends State<MyHomePage> {
         alignment: Alignment.center,
         fit: StackFit.expand,
         children: [
-          Container(color: Colors.black),
+          if (_background is Color)
+            Container(color: _background)
+          else
+            Image(image: _background, fit: BoxFit.cover),
           DanmakuWidget(
             createdController: (c) {
               _danmakuController = c;
@@ -117,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () async {
+                    onPressed: () {
                       parseDanmakuDialog();
                     },
                     child: const Text(
@@ -190,7 +208,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      print("style");
+                      setStyleDialog();
                     },
                     child: const Text(
                       "style",
@@ -199,7 +217,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      print("background");
+                      setBackgroundDialog();
                     },
                     child: const Text(
                       "background",
@@ -385,6 +403,107 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  void setStyleDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return SimpleDialog(
+          title: const Text("style"),
+          children: [
+            SimpleDialogOption(
+              onPressed: () {
+                danmakuConfig.drawMode = DanmakuDrawMode.normal;
+                Navigator.pop(context);
+              },
+              child: const Text("normal"),
+            ),
+            SimpleDialogOption(
+              onPressed: () {
+                danmakuConfig.drawMode = DanmakuDrawMode.stroke;
+                Navigator.pop(context);
+              },
+              child: const Text("stroke"),
+            ),
+            SimpleDialogOption(
+              onPressed: () {
+                danmakuConfig.drawMode = DanmakuDrawMode.shadow;
+                Navigator.pop(context);
+              },
+              child: const Text("shadow"),
+            ),
+            SimpleDialogOption(
+              onPressed: () {
+                danmakuConfig.drawMode = DanmakuDrawMode.shadowStroke;
+                Navigator.pop(context);
+              },
+              child: const Text("shadow stroke"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void setBackgroundDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return SimpleDialog(
+          title: const Text("background"),
+          children: [
+            SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text("color"),
+                      content: TextField(
+                        onChanged: (value) {
+                          setState(() {
+                            _background = Color(int.parse(value, radix: 16));
+                          });
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+              child: const Text("color"),
+            ),
+            SimpleDialogOption(
+              onPressed: () async {
+                final result = await FilePicker.platform.pickFiles(
+                  type: FileType.image,
+                );
+                if (result != null) {
+                  final image = MemoryImage(
+                    await result.files.first.xFile.readAsBytes(),
+                  );
+                  setState(() {
+                    _background = image;
+                  });
+                }
+                Navigator.pop(context);
+              },
+              child: const Text("file"),
+            ),
+            SimpleDialogOption(
+              onPressed: () {
+                setState(() {
+                  _background = Colors.transparent;
+                });
+                Navigator.pop(context);
+              },
+              child: const Text("transparent"),
+            ),
+          ],
+        );
+      },
     );
   }
 

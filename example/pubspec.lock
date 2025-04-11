@@ -101,6 +101,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_acrylic:
+    dependency: "direct main"
+    description:
+      name: flutter_acrylic
+      sha256: b3996dbde5abf5823cc9ead4cf2e5267c3181f15585fe47ce4dc4472e7ec827a
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.4"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -183,6 +191,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.1.1"
+  macos_window_utils:
+    dependency: transitive
+    description:
+      name: macos_window_utils
+      sha256: "28ebb4e6d5cbaa1330b5f78d13cf9693779830d0ffc64b471f8d384dd73b7b21"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.7.1"
   matcher:
     dependency: transitive
     description:
