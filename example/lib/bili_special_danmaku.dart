@@ -33,6 +33,7 @@ class BiliSpecialDanmaku extends Danmaku {
     var textStyle = TextStyle(
       color: textColor,
       fontSize: textSize,
+      fontFamily: danmakuConfig.fontFamily,
     );
     if (underline) {
       textStyle = textStyle.copyWith(decoration: TextDecoration.underline);

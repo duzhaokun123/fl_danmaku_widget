@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_danmaku_widget/ui/danmaku_widget.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
+import 'package:flutter_font_picker/flutter_font_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_danmaku_widget/danmaku/r2l_danmaku.dart';
 import 'package:fl_danmaku_widget/value.dart';
@@ -106,7 +107,6 @@ class _MyHomePageState extends State<MyHomePage> {
               _danmakuController.debugStyle = GoogleFonts.robotoMono(
                 textStyle: _danmakuController.debugStyle,
               );
-
               Timer(Duration(seconds: 1), () {
                 _danmakuController.period = (1000 / 60).toInt();
               });
@@ -199,7 +199,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      print("font family");
+                      setFontDialog();
                     },
                     child: const Text(
                       "font family",
@@ -403,6 +403,28 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  void setFontDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: double.maxFinite,
+              child: FontPicker(
+                onFontChanged: (font) {
+                  print(font.fontFamily);
+                  danmakuConfig.fontFamily = font.toTextStyle().fontFamily;
+                },
+                showInDialog: true,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
