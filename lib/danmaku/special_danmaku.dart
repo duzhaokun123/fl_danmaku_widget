@@ -29,6 +29,7 @@ class SpecialDanmaku extends Danmaku {
   @override
   bool get cacheable => true;
 
+  String? fontFamily;
   var drawMode = DanmakuDrawMode.normal;
 
   /// K: 进度 [0, 1]
@@ -40,6 +41,7 @@ class SpecialDanmaku extends Danmaku {
     var textStyle = TextStyle(
       color: textColor,
       fontSize: textSize,
+      fontFamily: fontFamily,
     );
     if (underline) {
       textStyle = textStyle.copyWith(decoration: TextDecoration.underline);

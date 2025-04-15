@@ -3,6 +3,9 @@ import 'dart:ui';
 import '../danmaku/danmaku.dart';
 
 class DanmakuConfig {
+  /// 字体
+  String? fontFamily;
+
   /// 持续时间系数
   var durationScale = 1.0;
 
